@@ -100,6 +100,7 @@ include 'tpl.header.php';
 	</table>
 </form>
 
+<!--
 <h2>Class activities</h2>
 
 <form method="post">
@@ -129,6 +130,7 @@ include 'tpl.header.php';
 		</tfoot>
 	</table>
 </form>
+-->
 
 <h2>Resources</h2>
 
