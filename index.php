@@ -16,6 +16,11 @@ if ( isset($_POST['activities']) ) {
 	return do_redirect();
 }
 
+if ( isset($_POST['timesets']) ) {
+	Timeset::_updates($_POST['timesets'], $labelIsEmpty);
+	return do_redirect();
+}
+
 if ( isset($_POST['days']) ) {
 	DayDimension::_updates($_POST['days'], $labelIsEmpty);
 	return do_redirect();
@@ -30,6 +35,9 @@ $activities = ClassActivity::all('1');
 $memberTypes = MemberType::all('1');
 $days = DayDimension::all('1');
 $times = TimeDimension::all('1');
+$timesets = Timeset::all('1');
+
+$weekdays = [1 => 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 0 => 'Sun'];
 
 $costsTpl = @$_GET['ctpl'] === '2' ? '2d' : '1d';
 
@@ -57,6 +65,10 @@ input ~ table {
 }
 .price {
 	width: 4em;
+	text-align: center;
+}
+.time {
+	width: 2.5em;
 	text-align: center;
 }
 </style>
@@ -130,6 +142,47 @@ input ~ table {
 	</table>
 </form>
 
+<h2>Timesets</h2>
+
+<form method="post">
+	<table>
+		<thead>
+			<tr>
+				<th></th>
+				<th>Label</th>
+				<? foreach ($weekdays as $wd => $weekday): ?>
+					<th class="fat"><?= html($weekday) ?></th>
+				<? endforeach ?>
+			</tr>
+		</thead>
+		<tbody>
+			<? foreach (array_merge($timesets, [new Timeset]) as $timeset): ?>
+				<tr>
+					<th><?= $timeset->id ?></th>
+					<td><input name="timesets[<?= $timeset->id ?: 0 ?>][label]" value="<?= html($timeset->label) ?>" placeholder="Timeset name" /></td>
+					<? foreach ($weekdays as $wd => $weekday):
+						if ($timeset->{"open_$wd"} == $timeset->{"clos_$wd"}) {
+							$timeset->{"open_$wd"} = $timeset->{"clos_$wd"} = '';
+						}
+						?>
+						<td class="fat">
+							<input class="time" name="timesets[<?= $timeset->id ?: 0 ?>][open_<?= $wd ?>]" value="<?= html($timeset->{"open_$wd"}) ?>" placeholder="<?= html($weekday) ?>" />
+							-
+							<input class="time" name="timesets[<?= $timeset->id ?: 0 ?>][clos_<?= $wd ?>]" value="<?= html($timeset->{"clos_$wd"}) ?>" placeholder="<?= html($weekday) ?>" />
+						</td>
+					<? endforeach ?>
+				</tr>
+			<? endforeach ?>
+		</tbody>
+		<tfoot>
+			<tr>
+				<td></td>
+				<td colspan="2"><button>Save</button></td>
+			</tr>
+		</tfoot>
+	</table>
+</form>
+
 <h2>Day dimension</h2>
 
 <form method="post">
@@ -168,6 +221,7 @@ input ~ table {
 				<th></th>
 				<th>Label</th>
 				<th>Default</th>
+				<th>Peak</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -176,13 +230,14 @@ input ~ table {
 					<th><?= $time->id ?></th>
 					<td><input name="times[<?= $time->id ?: 0 ?>][label]" value="<?= html($time->label) ?>" placeholder="Time label" /></td>
 					<td><input type="checkbox" name="times[<?= $time->id ?: 0 ?>][is_default]" <?= $time->is_default ? 'checked' : '' ?> /></td>
+					<td><input type="checkbox" name="times[<?= $time->id ?: 0 ?>][is_peak]" <?= $time->is_peak ? 'checked' : '' ?> /></td>
 				</tr>
 			<? endforeach ?>
 		</tbody>
 		<tfoot>
 			<tr>
 				<td></td>
-				<td colspan="2"><button>Save</button></td>
+				<td colspan="3"><button>Save</button></td>
 			</tr>
 		</tfoot>
 	</table>

@@ -3,9 +3,10 @@
 $fk = function($tbl, $col, $null = false) {
 	return ['null' => $null, 'type' => 'int', 'references' => [$tbl, $col]];
 };
+$weekday = ['type' => 'int', 'null' => false, 'default' => 0];
 
 return [
-	'version' => 6,
+	'version' => 8,
 	'tables' => [
 		'day_dimension' => [
 			'id' => ['pk' => true],
@@ -16,6 +17,7 @@ return [
 			'id' => ['pk' => true],
 			'label' => ['null' => false],
 			'is_default' => ['null' => false, 'type' => 'int', 'default' => 0],
+			'is_peak' => ['null' => false, 'type' => 'int', 'default' => 0],
 		],
 
 		'costs' => [
@@ -45,6 +47,25 @@ return [
 			'member_type_id' => $fk('member_types', 'id'),
 			'start_date' => ['null' => false, 'type' => 'date'],
 			'costs_id' => $fk('costs', 'id', true),
+		],
+
+		'timesets' => [
+			'id' => ['pk' => true],
+			'label' => ['null' => false],
+			'open_1' => $weekday,
+			'clos_1' => $weekday,
+			'open_2' => $weekday,
+			'clos_2' => $weekday,
+			'open_3' => $weekday,
+			'clos_3' => $weekday,
+			'open_4' => $weekday,
+			'clos_4' => $weekday,
+			'open_5' => $weekday,
+			'clos_5' => $weekday,
+			'open_6' => $weekday,
+			'clos_6' => $weekday,
+			'open_0' => $weekday,
+			'clos_0' => $weekday,
 		],
 
 		// @todo Time sets

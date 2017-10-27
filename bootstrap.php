@@ -67,6 +67,19 @@ trait WithCosts {
 
 /**
  * @property string $label
+ * @property string $open_N
+ * @property string $clos_N
+ */
+class Timeset extends Model {
+	static public $_table = 'timesets';
+
+	function __toString() {
+		return $this->label ?: '';
+	}
+}
+
+/**
+ * @property string $label
  * @property string $days
  */
 class DayDimension extends Model {
