@@ -2,9 +2,14 @@
 
 require 'bootstrap.php';
 
-$labelIsEmpty = function($data) {
+$labelIsEmpty = function(array $data) {
 	return trim(@$data['label']) === '';
 };
+
+if ( isset($_POST['member_types']) ) {
+	MemberType::_updates($_POST['member_types'], $labelIsEmpty);
+	return do_redirect();
+}
 
 if ( isset($_POST['activities']) ) {
 	ClassActivity::_updates($_POST['activities'], $labelIsEmpty);
@@ -22,13 +27,9 @@ if ( isset($_POST['times']) ) {
 }
 
 $activities = ClassActivity::all('1');
-// $activities[] = new ClassActivity;
-
+$memberTypes = MemberType::all('1');
 $days = DayDimension::all('1');
-// $days[] = new DayDimension;
-
 $times = TimeDimension::all('1');
-// $times[] = new TimeDimension;
 
 $costsTpl = @$_GET['ctpl'] === '2' ? '2d' : '1d';
 
@@ -39,7 +40,7 @@ table {
 }
 td, th {
 	border: solid #bbb 1px;
-	padding: 4px;
+	padding: 6px;
 }
 td.fat, th.fat {
 	border-left: solid #999 3px;
@@ -47,12 +48,13 @@ td.fat, th.fat {
 table table td {
 	text-align: center;
 }
-
+input ~ table {
+	margin-top: 0.5em;
+}
 ::placeholder {
 	font-style: italic;
 	color: #bbb;
 }
-
 .price {
 	width: 4em;
 	text-align: center;
@@ -60,6 +62,43 @@ table table td {
 </style>
 
 <p><a href="?ctpl=1">1D</a> | <a href="?ctpl=2">2D</a></p>
+
+<h2>Member types</h2>
+
+<form method="post">
+	<table>
+		<? foreach (array_merge($memberTypes, [new MemberType]) as $type): ?>
+			<tbody>
+				<tr>
+					<th><?= $type->id ?></th>
+					<td><input name="member_types[<?= $type->id ?: 0 ?>][label]" value="<?= html($type->label) ?>" placeholder="Member type name" /></td>
+				</tr>
+				<? if ($type->id): ?>
+					<tr>
+						<td></td>
+						<td colspan="2">
+							<? foreach (array_merge($type->datas, [new MemberTypeData]) as $data): ?>
+								<input name="member_types[<?= $type->id ?: 0 ?>][datas][<?= $data->id ?: 0 ?>][start_date]" value="<?= html($data->start_date) ?>" placeholder="2014-04-21" /><br>
+								<? if ($data->id): ?>
+									<? $source = ["member_types[$type->id][datas][$data->id]", $data->costs]; include "tpl.costs-{$costsTpl}.php" ?>
+									<br>
+									<hr>
+								<? endif ?>
+								<br>
+							<? endforeach ?>
+						</td>
+					</tr>
+				<? endif ?>
+			</tbody>
+		<? endforeach ?>
+		<tfoot>
+			<tr>
+				<td></td>
+				<td colspan="2"><button>Save</button></td>
+			</tr>
+		</tfoot>
+	</table>
+</form>
 
 <h2>Class activities</h2>
 
@@ -74,8 +113,9 @@ table table td {
 				<? if ($activity->id): ?>
 					<tr>
 						<td></td>
-						<td colspan="2" style="padding: 0">
-							<? $source = ['activities', $activity->id, $activity->costs]; include "tpl.costs-{$costsTpl}.php" ?>
+						<td colspan="2">
+							<? $source = ["activities[$activity->id]", $activity->costs]; include "tpl.costs-{$costsTpl}.php" ?>
+							<br>
 						</td>
 					</tr>
 				<? endif ?>
@@ -127,6 +167,7 @@ table table td {
 			<tr>
 				<th></th>
 				<th>Label</th>
+				<th>Default</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -134,6 +175,7 @@ table table td {
 				<tr>
 					<th><?= $time->id ?></th>
 					<td><input name="times[<?= $time->id ?: 0 ?>][label]" value="<?= html($time->label) ?>" placeholder="Time label" /></td>
+					<td><input type="checkbox" name="times[<?= $time->id ?: 0 ?>][is_default]" <?= $time->is_default ? 'checked' : '' ?> /></td>
 				</tr>
 			<? endforeach ?>
 		</tbody>

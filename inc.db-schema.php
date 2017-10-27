@@ -5,7 +5,7 @@ $fk = function($tbl, $col, $null = false) {
 };
 
 return [
-	'version' => 5,
+	'version' => 6,
 	'tables' => [
 		'day_dimension' => [
 			'id' => ['pk' => true],
@@ -15,6 +15,7 @@ return [
 		'time_dimension' => [
 			'id' => ['pk' => true],
 			'label' => ['null' => false],
+			'is_default' => ['null' => false, 'type' => 'int', 'default' => 0],
 		],
 
 		'costs' => [
