@@ -46,13 +46,13 @@ trait WithCosts {
 		return $costs;
 	}
 
-	protected function preUpdate( array &$data ) {
+	protected function preUpdateCosts( array &$data ) {
 		$prices = @$data['costs'];
 		unset($data['costs']);
 		return $prices;
 	}
 
-	protected function postUpdate( $prices ) {
+	protected function postUpdateCosts( $prices ) {
 		if ( $prices ) {
 			/** @var Costs $costs */
 			$costs = $this->costs;
@@ -68,8 +68,10 @@ trait WithCosts {
 /**
  * @property string $label
  * @property int $open_timeset_id
+ * @property int $resource_price_id
  * @property ResourceTimeset[] $timesets
  * @property Timeset $open_timeset
+ * @property ResourcePrice $resource_price
  */
 class Resource extends Model {
 	static public $_table = 'resources';
@@ -80,6 +82,10 @@ class Resource extends Model {
 
 	protected function get_open_timeset() {
 		return Timeset::find($this->open_timeset_id);
+	}
+
+	protected function get_resource_price() {
+		return ResourcePrice::find($this->resource_price_id);
 	}
 
 	function isOpenFor( $today, $startTime, $endTime ) {
@@ -133,6 +139,12 @@ class Resource extends Model {
 		return null;
 	}
 
+	static function presave( &$data ) {
+		parent::presave($data);
+
+		$data['resource_price_id'] = $data['resource_price_id'] ?: null;
+	}
+
 	function update( $data ) {
 		$timesets = @$data['timesets'];
 		unset($data['timesets']);
@@ -183,6 +195,27 @@ class ResourceTimeset extends Model {
  */
 class Timeset extends Model {
 	static public $_table = 'timesets';
+
+	function __toString() {
+		return $this->label ?: '';
+	}
+}
+
+/**
+ * @property string $label
+ * @property int $costs_id
+ * @property Costs $costs
+ */
+class ResourcePrice extends Model {
+	use WithCosts;
+
+	static public $_table = 'resource_prices';
+
+	function update( $data ) {
+		$prices = $this->preUpdateCosts($data);
+		parent::update($data);
+		$this->postUpdateCosts($prices);
+	}
 
 	function __toString() {
 		return $this->label ?: '';
@@ -251,9 +284,9 @@ class ClassActivity extends Model {
 	}
 
 	function update( $data ) {
-		$prices = $this->preUpdate($data);
+		$prices = $this->preUpdateCosts($data);
 		parent::update($data);
-		$this->postUpdate($prices);
+		$this->postUpdateCosts($prices);
 	}
 }
 
@@ -308,9 +341,9 @@ class MemberTypeData extends Model {
 	static public $_table = 'member_type_datas';
 
 	function update( $data ) {
-		$prices = $this->preUpdate($data);
+		$prices = $this->preUpdateCosts($data);
 		parent::update($data);
-		$this->postUpdate($prices);
+		$this->postUpdateCosts($prices);
 	}
 }
 

@@ -21,6 +21,11 @@ if ( isset($_POST['resources']) ) {
 	return do_redirect();
 }
 
+if ( isset($_POST['resource_prices']) ) {
+	ResourcePrice::_updates($_POST['resource_prices'], $labelIsEmpty);
+	return do_redirect();
+}
+
 if ( isset($_POST['timesets']) ) {
 	Timeset::_updates($_POST['timesets'], $labelIsEmpty);
 	return do_redirect();
@@ -39,6 +44,7 @@ if ( isset($_POST['times']) ) {
 $activities = ClassActivity::all('1');
 $memberTypes = MemberType::all('1');
 $resources = Resource::all('1');
+$resourcePrices = ResourcePrice::all('1');
 $days = DayDimension::all('1');
 $times = TimeDimension::all('1');
 $timesets = Timeset::all('1');
@@ -134,6 +140,7 @@ include 'tpl.header.php';
 				<th>Label</th>
 				<th>Open time</th>
 				<th>Special times</th>
+				<th>Guest price</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -151,13 +158,44 @@ include 'tpl.header.php';
 							<? endforeach ?>
 						<? endif ?>
 					</td>
+					<td><select name="resources[<?= $resource->id ?: 0 ?>][resource_price_id]"><?= html_options($resourcePrices, $resource->resource_price_id, '--') ?></select></td>
 				</tr>
 			<? endforeach ?>
 		</tbody>
 		<tfoot>
 			<tr>
 				<td></td>
-				<td colspan="3"><button>Save</button></td>
+				<td colspan="4"><button>Save</button></td>
+			</tr>
+		</tfoot>
+	</table>
+</form>
+
+<h2>Resource prices</h2>
+
+<form method="post">
+	<table>
+		<? foreach (array_merge($resourcePrices, [new ResourcePrice]) as $price): ?>
+			<tbody>
+				<tr>
+					<th><?= $price->id ?></th>
+					<td><input name="resource_prices[<?= $price->id ?: 0 ?>][label]" value="<?= html($price->label) ?>" placeholder="Price name" /></td>
+				</tr>
+				<? if ($price->id): ?>
+					<tr>
+						<td></td>
+						<td colspan="2">
+							<? $source = ["resource_prices[$price->id]", $price->costs]; include "tpl.costs-{$costsTpl}.php" ?>
+							<br>
+						</td>
+					</tr>
+				<? endif ?>
+			</tbody>
+		<? endforeach ?>
+		<tfoot>
+			<tr>
+				<td></td>
+				<td colspan="2"><button>Save</button></td>
 			</tr>
 		</tfoot>
 	</table>

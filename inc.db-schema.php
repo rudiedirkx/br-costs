@@ -6,7 +6,7 @@ $fk = function($tbl, $col, $null = false, $delete = null) {
 $weekday = ['type' => 'int', 'null' => false, 'default' => 0];
 
 return [
-	'version' => 12,
+	'version' => 14,
 	'tables' => [
 		'day_dimension' => [
 			'id' => ['pk' => true],
@@ -73,12 +73,18 @@ return [
 			'id' => ['pk' => true],
 			'label' => ['null' => false],
 			'open_timeset_id' => $fk('timesets', 'id'),
+			'resource_price_id' => $fk('resource_prices', 'id', true, 'set null'),
 		],
 		'resource_timesets' => [
 			'id' => ['pk' => true],
 			'resource_id' => $fk('resources', 'id', false, 'cascade'),
 			'timeset_id' => $fk('timesets', 'id', false, 'cascade'),
 			'time_dimension_id' => $fk('time_dimension', 'id', false, 'cascade'),
+		],
+		'resource_prices' => [
+			'id' => ['pk' => true],
+			'label' => ['null' => false],
+			'costs_id' => $fk('costs', 'id', true),
 		],
 	],
 ];
