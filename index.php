@@ -16,6 +16,11 @@ if ( isset($_POST['activities']) ) {
 	return do_redirect();
 }
 
+if ( isset($_POST['resources']) ) {
+	Resource::_updates($_POST['resources'], $labelIsEmpty);
+	return do_redirect();
+}
+
 if ( isset($_POST['timesets']) ) {
 	Timeset::_updates($_POST['timesets'], $labelIsEmpty);
 	return do_redirect();
@@ -33,6 +38,7 @@ if ( isset($_POST['times']) ) {
 
 $activities = ClassActivity::all('1');
 $memberTypes = MemberType::all('1');
+$resources = Resource::all('1');
 $days = DayDimension::all('1');
 $times = TimeDimension::all('1');
 $timesets = Timeset::all('1');
@@ -49,6 +55,7 @@ table {
 td, th {
 	border: solid #bbb 1px;
 	padding: 6px;
+	vertical-align: top;
 }
 td.fat, th.fat {
 	border-left: solid #999 3px;
@@ -137,6 +144,45 @@ input ~ table {
 			<tr>
 				<td></td>
 				<td colspan="2"><button>Save</button></td>
+			</tr>
+		</tfoot>
+	</table>
+</form>
+
+<h2>Resources</h2>
+
+<form method="post">
+	<table>
+		<thead>
+			<tr>
+				<th></th>
+				<th>Label</th>
+				<th>Open time</th>
+				<th>Special times</th>
+			</tr>
+		</thead>
+		<tbody>
+			<? foreach (array_merge($resources, [new Resource]) as $resource): ?>
+				<tr>
+					<th><?= $resource->id ?></th>
+					<td><input name="resources[<?= $resource->id ?: 0 ?>][label]" value="<?= html($resource->label) ?>" placeholder="Resource name" /></td>
+					<td><select name="resources[<?= $resource->id ?: 0 ?>][open_timeset_id]"><?= html_options($timesets, $resource->open_timeset_id) ?></select></td>
+					<td>
+						<? if ($resource->id): ?>
+							<? foreach (array_merge($resource->timesets, [new ResourceTimeset]) as $timeset): ?>
+								<select name="resources[<?= $resource->id ?>][timesets][<?= $timeset->id ?: 0 ?>][timeset_id]"><?= html_options($timesets, $timeset->timeset_id, '--') ?></select>
+								<select name="resources[<?= $resource->id ?>][timesets][<?= $timeset->id ?: 0 ?>][time_dimension_id]"><?= html_options($times, $timeset->time_dimension_id, '--') ?></select>
+								<br>
+							<? endforeach ?>
+						<? endif ?>
+					</td>
+				</tr>
+			<? endforeach ?>
+		</tbody>
+		<tfoot>
+			<tr>
+				<td></td>
+				<td colspan="3"><button>Save</button></td>
 			</tr>
 		</tfoot>
 	</table>

@@ -1,12 +1,12 @@
 <?php
 
-$fk = function($tbl, $col, $null = false) {
-	return ['null' => $null, 'type' => 'int', 'references' => [$tbl, $col]];
+$fk = function($tbl, $col, $null = false, $delete = null) {
+	return ['null' => $null, 'type' => 'int', 'references' => [$tbl, $col, $delete]];
 };
 $weekday = ['type' => 'int', 'null' => false, 'default' => 0];
 
 return [
-	'version' => 8,
+	'version' => 11,
 	'tables' => [
 		'day_dimension' => [
 			'id' => ['pk' => true],
@@ -68,7 +68,16 @@ return [
 			'clos_0' => $weekday,
 		],
 
-		// @todo Time sets
-		// @todo Resources
+		'resources' => [
+			'id' => ['pk' => true],
+			'label' => ['null' => false],
+			'open_timeset_id' => $fk('timesets', 'id'),
+		],
+		'resource_timesets' => [
+			'id' => ['pk' => true],
+			'resource_id' => $fk('resources', 'id', false, 'cascade'),
+			'timeset_id' => $fk('timesets', 'id', false, 'cascade'),
+			'time_dimension_id' => $fk('time_dimension', 'id', false, 'cascade'),
+		],
 	],
 ];

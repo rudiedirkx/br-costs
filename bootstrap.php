@@ -67,6 +67,57 @@ trait WithCosts {
 
 /**
  * @property string $label
+ * @property int $open_timeset_id
+ */
+class Resource extends Model {
+	static public $_table = 'resources';
+
+	protected function get_timesets() {
+		return ResourceTimeset::all(['resource_id' => $this->id]);
+	}
+
+	function update( $data ) {
+		$timesets = @$data['timesets'];
+		unset($data['timesets']);
+
+		parent::update($data);
+
+		if ( $timesets ) {
+			ResourceTimeset::_updates($timesets, function( array &$data ) {
+				$data['resource_id'] = $this->id;
+				return empty($data['timeset_id']) || empty($data['time_dimension_id']);
+			});
+		}
+	}
+
+	function __toString() {
+		return $this->label ?: '';
+	}
+}
+
+/**
+ * @property int $resource_id
+ * @property int $timeset_id
+ * @property int $time_dimension_id
+ */
+class ResourceTimeset extends Model {
+	static public $_table = 'resource_timesets';
+
+	protected function get_resource() {
+		return Resource::find($this->resource_id);
+	}
+
+	protected function get_timeset() {
+		return Timeset::find($this->timeset_id);
+	}
+
+	protected function get_time_dimension() {
+		return TimeDimension::find($this->time_dimension_id);
+	}
+}
+
+/**
+ * @property string $label
  * @property string $open_N
  * @property string $clos_N
  */
