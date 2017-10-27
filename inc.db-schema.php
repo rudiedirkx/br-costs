@@ -6,7 +6,7 @@ $fk = function($tbl, $col, $null = false, $delete = null) {
 $weekday = ['type' => 'int', 'null' => false, 'default' => 0];
 
 return [
-	'version' => 11,
+	'version' => 12,
 	'tables' => [
 		'day_dimension' => [
 			'id' => ['pk' => true],
@@ -18,6 +18,7 @@ return [
 			'label' => ['null' => false],
 			'is_default' => ['null' => false, 'type' => 'int', 'default' => 0],
 			'is_peak' => ['null' => false, 'type' => 'int', 'default' => 0],
+			'color' => ['null' => false, 'default' => ''],
 		],
 
 		'costs' => [

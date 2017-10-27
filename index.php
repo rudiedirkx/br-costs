@@ -45,40 +45,11 @@ $timesets = Timeset::all('1');
 
 $weekdays = [1 => 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 0 => 'Sun'];
 
-$costsTpl = @$_GET['ctpl'] === '2' ? '2d' : '1d';
+$costsTpl = @$_GET['ctpl'] === '1' ? '1d' : '2d';
+
+include 'tpl.header.php';
 
 ?>
-<style>
-table {
-	border-collapse: collapse;
-}
-td, th {
-	border: solid #bbb 1px;
-	padding: 6px;
-	vertical-align: top;
-}
-td.fat, th.fat {
-	border-left: solid #999 3px;
-}
-table table td {
-	text-align: center;
-}
-input ~ table {
-	margin-top: 0.5em;
-}
-::placeholder {
-	font-style: italic;
-	color: #bbb;
-}
-.price {
-	width: 4em;
-	text-align: center;
-}
-.time {
-	width: 2.5em;
-	text-align: center;
-}
-</style>
 
 <p>
 	<a href="?ctpl=1">1D</a> |
@@ -272,6 +243,7 @@ input ~ table {
 				<th>Label</th>
 				<th>Default</th>
 				<th>Peak</th>
+				<th>Color</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -281,19 +253,19 @@ input ~ table {
 					<td><input name="times[<?= $time->id ?: 0 ?>][label]" value="<?= html($time->label) ?>" placeholder="Time label" /></td>
 					<td><input type="checkbox" name="times[<?= $time->id ?: 0 ?>][is_default]" <?= $time->is_default ? 'checked' : '' ?> /></td>
 					<td><input type="checkbox" name="times[<?= $time->id ?: 0 ?>][is_peak]" <?= $time->is_peak ? 'checked' : '' ?> /></td>
+					<td><input name="times[<?= $time->id ?: 0 ?>][color]" value="<?= html($time->color) ?>" placeholder="Color" /></td>
 				</tr>
 			<? endforeach ?>
 		</tbody>
 		<tfoot>
 			<tr>
 				<td></td>
-				<td colspan="3"><button>Save</button></td>
+				<td colspan="4"><button>Save</button></td>
 			</tr>
 		</tfoot>
 	</table>
 </form>
 
-<details>
-	<summary>Queries (<?= count($db->queries) ?>)</summary>
-	<pre><? print_r($db->queries) ?></pre>
-</details>
+<?php
+
+include 'tpl.footer.php';

@@ -68,6 +68,7 @@ trait WithCosts {
 /**
  * @property string $label
  * @property int $open_timeset_id
+ * @property ResourceTimeset[] $timesets
  * @property Timeset $open_timeset
  */
 class Resource extends Model {
@@ -79,6 +80,57 @@ class Resource extends Model {
 
 	protected function get_open_timeset() {
 		return Timeset::find($this->open_timeset_id);
+	}
+
+	function isOpenFor( $today, $startTime, $endTime ) {
+		if ( $this->open_timeset->{"open_$today"} < $endTime && $this->open_timeset->{"clos_$today"} > $startTime ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/** @return Timeset */
+	function getTimesetFor( $today, $startTime, $endTime ) {
+		if ( $this->isOpenFor($today, $startTime, $endTime) ) {
+			$timeset = $this->getSpecialFor($today, $startTime, $endTime);
+			if ( $timeset ) {
+				return $timeset->timeset;
+			}
+
+			return $this->open_timeset;
+		}
+
+		// Closed
+		return null;
+	}
+
+	/** @return TimeDimension */
+	function getTimeDimensionFor( $today, $startTime, $endTime ) {
+		if ( $this->isOpenFor($today, $startTime, $endTime) ) {
+			$timeset = $this->getSpecialFor($today, $startTime, $endTime);
+			if ( $timeset ) {
+				return $timeset->time_dimension;
+			}
+
+			// The default
+			return TimeDimension::getDefault();
+		}
+
+		// Closed
+		return null;
+	}
+
+	/** @return ResourceTimeset */
+	function getSpecialFor( $today, $startTime, $endTime ) {
+		foreach ( $this->timesets as $timeset ) {
+			if ( $timeset->timeset->{"open_$today"} < $endTime && $timeset->timeset->{"clos_$today"} > $startTime ) {
+				return $timeset;
+			}
+		}
+
+		// No peak-ish time
+		return null;
 	}
 
 	function update( $data ) {
@@ -104,6 +156,9 @@ class Resource extends Model {
  * @property int $resource_id
  * @property int $timeset_id
  * @property int $time_dimension_id
+ * @property Resource $resource
+ * @property Timeset $timeset
+ * @property TimeDimension $time_dimension
  */
 class ResourceTimeset extends Model {
 	static public $_table = 'resource_timesets';
@@ -149,12 +204,24 @@ class DayDimension extends Model {
 /**
  * @property string $label
  * @property bool $is_default
+ * @property bool $is_peak
+ * @property string $color
  */
 class TimeDimension extends Model {
 	static public $_table = 'time_dimension';
 
 	static function presave( &$data ) {
 		$data['is_default'] = !empty($data['is_default']);
+		$data['is_peak'] = !empty($data['is_peak']);
+	}
+
+	/** @return TimeDimension */
+	static function getDefault() {
+		static $cache;
+		if ( $cache === null ) {
+			$cache = TimeDimension::first(['is_default' => true]);
+		}
+		return $cache;
 	}
 
 	function __toString() {
