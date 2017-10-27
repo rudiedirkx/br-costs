@@ -68,12 +68,17 @@ trait WithCosts {
 /**
  * @property string $label
  * @property int $open_timeset_id
+ * @property Timeset $open_timeset
  */
 class Resource extends Model {
 	static public $_table = 'resources';
 
 	protected function get_timesets() {
 		return ResourceTimeset::all(['resource_id' => $this->id]);
+	}
+
+	protected function get_open_timeset() {
+		return Timeset::find($this->open_timeset_id);
 	}
 
 	function update( $data ) {

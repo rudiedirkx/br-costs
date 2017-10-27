@@ -80,7 +80,11 @@ input ~ table {
 }
 </style>
 
-<p><a href="?ctpl=1">1D</a> | <a href="?ctpl=2">2D</a></p>
+<p>
+	<a href="?ctpl=1">1D</a> |
+	<a href="?ctpl=2">2D</a> |
+	<a href="matrix.php">Matrix</a>
+</p>
 
 <h2>Member types</h2>
 
