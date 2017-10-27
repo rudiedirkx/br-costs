@@ -292,12 +292,22 @@ class ClassActivity extends Model {
 
 /**
  * @property string $label
+ * @property MemberTypeData[] $datas
+ * @property MemberTypeData $active_data
  */
 class MemberType extends Model {
 	static public $_table = 'member_types';
 
 	protected function get_datas() {
 		return MemberTypeData::all('member_type_id = ? ORDER BY start_date', [$this->id]);
+	}
+
+	protected function get_active_data() {
+		foreach (array_reverse($this->datas) as $data) {
+			if ($data->start_date <= TODAY) {
+				return $data;
+			}
+		}
 	}
 
 	function update( $data ) {
@@ -393,13 +403,18 @@ class Costs extends Model {
 		return (float)@$this->costs["{$did}-{$tid}-{$context}"];
 	}
 
-	public function getDisplay( $did, $tid, $context ) {
+	public function getInput( $did, $tid, $context ) {
 		$price = $this->get($did, $tid, $context);
 		if ( $price > 0 ) {
 			return number_format($price, 2);
 		}
 
 		return '';
+	}
+
+	public function getDisplay( $did, $tid, $context ) {
+		$price = (float) $this->get($did, $tid, $context);
+		return number_format($price, 2);
 	}
 
 	static function create( $label ) {
