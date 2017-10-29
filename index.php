@@ -63,9 +63,9 @@ include 'tpl.header.php';
 	<a href="matrix.php">Matrix</a>
 </p>
 
-<h2>Member types</h2>
+<h2 id="membertypes">Member types</h2>
 
-<form method="post">
+<form method="post" action="#membertypes">
 	<table>
 		<? foreach (array_merge($memberTypes, [new MemberType]) as $type): ?>
 			<tbody>
@@ -101,9 +101,9 @@ include 'tpl.header.php';
 </form>
 
 <!--
-<h2>Class activities</h2>
+<h2t" id="activities">Class activities</h2>
 
-<form method="post">
+<form method="pos action="#activities">
 	<table>
 		<? foreach (array_merge($activities, [new ClassActivity]) as $activity): ?>
 			<tbody>
@@ -132,9 +132,9 @@ include 'tpl.header.php';
 </form>
 -->
 
-<h2>Resources</h2>
+<h2 id="resources">Resources</h2>
 
-<form method="post">
+<form method="post" action="#resources">
 	<table>
 		<thead>
 			<tr>
@@ -173,9 +173,9 @@ include 'tpl.header.php';
 	</table>
 </form>
 
-<h2>Resource prices</h2>
+<h2 id="resourceprices">Resource prices</h2>
 
-<form method="post">
+<form method="post" action="#resourceprices">
 	<table>
 		<? foreach (array_merge($resourcePrices, [new ResourcePrice]) as $price): ?>
 			<tbody>
@@ -203,9 +203,9 @@ include 'tpl.header.php';
 	</table>
 </form>
 
-<h2>Timesets</h2>
+<h2 id="timesets">Timesets</h2>
 
-<form method="post">
+<form method="post" action="#timesets">
 	<table>
 		<thead>
 			<tr>
@@ -244,9 +244,9 @@ include 'tpl.header.php';
 	</table>
 </form>
 
-<h2>Day dimension</h2>
+<h2 id="days">Day dimension</h2>
 
-<form method="post">
+<form method="post" action="#days">
 	<table>
 		<thead>
 			<tr>
@@ -273,9 +273,9 @@ include 'tpl.header.php';
 	</table>
 </form>
 
-<h2>Time dimension</h2>
+<h2 id="times">Time dimension</h2>
 
-<form method="post">
+<form method="post" action="#times">
 	<table>
 		<thead>
 			<tr>
