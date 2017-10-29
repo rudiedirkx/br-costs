@@ -49,6 +49,7 @@ trait WithCosts {
 	protected function preUpdateCosts( array &$data ) {
 		$prices = @$data['costs'];
 		unset($data['costs']);
+
 		return $prices;
 	}
 
@@ -67,29 +68,36 @@ trait WithCosts {
 
 /**
  * @property string $label
- * @property int $open_timeset_id
  * @property int $resource_price_id
  * @property ResourceTimeset[] $timesets
- * @property Timeset $open_timeset
  * @property ResourcePrice $resource_price
  */
 class Resource extends Model {
 	static public $_table = 'resources';
 
 	protected function get_timesets() {
-		return ResourceTimeset::all(['resource_id' => $this->id]);
-	}
-
-	protected function get_open_timeset() {
-		return Timeset::find($this->open_timeset_id);
+		return ResourceTimeset::all('resource_id = ? ORDER BY start_date', [$this->id]);
 	}
 
 	protected function get_resource_price() {
 		return ResourcePrice::find($this->resource_price_id);
 	}
 
-	function isOpenFor( $today, $startTime, $endTime ) {
-		if ( $this->open_timeset->{"open_$today"} < $endTime && $this->open_timeset->{"clos_$today"} > $startTime ) {
+	/** @return ResourceTimeset */
+	function getDatedTimesetFor( $date ) {
+		/** @var ResourceTimeset $timeset */
+		foreach ( array_reverse($this->timesets) as $timeset ) {
+			if ( $date >= $timeset->start_date && $date <= $timeset->end_date ) {
+				return $timeset;
+			}
+		}
+	}
+
+	/** @return bool */
+	function isOpenFor( $date, $startTime, $endTime ) {
+		$today = date('w', strtotime($date));
+		$activeTimeset = $this->getDatedTimesetFor($date);
+		if ( $activeTimeset->open_timeset->{"open_$today"} < $endTime && $activeTimeset->open_timeset->{"clos_$today"} > $startTime ) {
 			return true;
 		}
 
@@ -97,14 +105,15 @@ class Resource extends Model {
 	}
 
 	/** @return Timeset */
-	function getTimesetFor( $today, $startTime, $endTime ) {
-		if ( $this->isOpenFor($today, $startTime, $endTime) ) {
-			$timeset = $this->getSpecialFor($today, $startTime, $endTime);
+	function getTimesetFor( $date, $startTime, $endTime ) {
+		if ( $this->isOpenFor($date, $startTime, $endTime) ) {
+			$timeset = $this->getSpecialFor($date, $startTime, $endTime);
 			if ( $timeset ) {
 				return $timeset->timeset;
 			}
 
-			return $this->open_timeset;
+			$activeTimeset = $this->getDatedTimesetFor($date);
+			return $activeTimeset->open_timeset;
 		}
 
 		// Closed
@@ -112,9 +121,9 @@ class Resource extends Model {
 	}
 
 	/** @return TimeDimension */
-	function getTimeDimensionFor( $today, $startTime, $endTime ) {
-		if ( $this->isOpenFor($today, $startTime, $endTime) ) {
-			$timeset = $this->getSpecialFor($today, $startTime, $endTime);
+	function getTimeDimensionFor( $date, $startTime, $endTime ) {
+		if ( $this->isOpenFor($date, $startTime, $endTime) ) {
+			$timeset = $this->getSpecialFor($date, $startTime, $endTime);
 			if ( $timeset ) {
 				return $timeset->time_dimension;
 			}
@@ -127,9 +136,11 @@ class Resource extends Model {
 		return null;
 	}
 
-	/** @return ResourceTimeset */
-	function getSpecialFor( $today, $startTime, $endTime ) {
-		foreach ( $this->timesets as $timeset ) {
+	/** @return ResourcePeakTime */
+	function getSpecialFor( $date, $startTime, $endTime ) {
+		$today = date('w', strtotime($date));
+		$activeTimeset = $this->getDatedTimesetFor($date);
+		foreach ( $activeTimeset->peak_times as $timeset ) {
 			if ( $timeset->timeset->{"open_$today"} < $endTime && $timeset->timeset->{"clos_$today"} > $startTime ) {
 				return $timeset;
 			}
@@ -154,7 +165,8 @@ class Resource extends Model {
 		if ( $timesets ) {
 			ResourceTimeset::_updates($timesets, function( array &$data ) {
 				$data['resource_id'] = $this->id;
-				return empty($data['timeset_id']) || empty($data['time_dimension_id']);
+
+				return empty($data['start_date']) || empty($data['end_date']);
 			});
 		}
 	}
@@ -166,17 +178,57 @@ class Resource extends Model {
 
 /**
  * @property int $resource_id
- * @property int $timeset_id
- * @property int $time_dimension_id
+ * @property string $start_date
+ * @property string $end_date
+ * @property int $open_timeset_id
  * @property Resource $resource
- * @property Timeset $timeset
- * @property TimeDimension $time_dimension
+ * @property Timeset $open_timeset
+ * @property ResourcePeakTime[] $peak_times
  */
 class ResourceTimeset extends Model {
 	static public $_table = 'resource_timesets';
 
 	protected function get_resource() {
 		return Resource::find($this->resource_id);
+	}
+
+	protected function get_open_timeset() {
+		return Timeset::find($this->open_timeset_id);
+	}
+
+	protected function get_peak_times() {
+		return ResourcePeakTime::all(['resource_timeset_id' => $this->id]);
+	}
+
+	function update( $data ) {
+		$peaks = @$data['peak_times'];
+		unset($data['peak_times']);
+
+		parent::update($data);
+
+		if ( $peaks ) {
+			ResourcePeakTime::_updates($peaks, function( array &$data ) {
+				$data['resource_timeset_id'] = $this->id;
+
+				return empty($data['timeset_id']) || empty($data['time_dimension_id']);
+			});
+		}
+	}
+}
+
+/**
+ * @property int $resource_timeset_id
+ * @property int $timeset_id
+ * @property int $time_dimension_id
+ * @property ResourceTimeset $resource_timeset
+ * @property Timeset $timeset
+ * @property TimeDimension $time_dimension
+ */
+class ResourcePeakTime extends Model {
+	static public $_table = 'resource_peak_times';
+
+	protected function get_resource_timeset() {
+		return ResourceTimeset::find($this->resource_timeset_id);
 	}
 
 	protected function get_timeset() {
@@ -254,6 +306,7 @@ class TimeDimension extends Model {
 		if ( $cache === null ) {
 			$cache = TimeDimension::first(['is_default' => true]);
 		}
+
 		return $cache;
 	}
 
@@ -293,7 +346,6 @@ class ClassActivity extends Model {
 /**
  * @property string $label
  * @property MemberTypeData[] $datas
- * @property MemberTypeData $active_data
  */
 class MemberType extends Model {
 	static public $_table = 'member_types';
@@ -302,9 +354,11 @@ class MemberType extends Model {
 		return MemberTypeData::all('member_type_id = ? ORDER BY start_date', [$this->id]);
 	}
 
-	protected function get_active_data() {
-		foreach (array_reverse($this->datas) as $data) {
-			if ($data->start_date <= TODAY) {
+	/** @return MemberTypeData */
+	function getDataFor( $date ) {
+		/** @var MemberTypeData $data */
+		foreach ( array_reverse($this->datas) as $data ) {
+			if ( $data->start_date <= $date ) {
 				return $data;
 			}
 		}
@@ -319,6 +373,7 @@ class MemberType extends Model {
 		if ( $datas ) {
 			MemberTypeData::_updates($datas, function( array &$data ) {
 				$data['member_type_id'] = $this->id;
+
 				return empty($data['start_date']);
 			});
 		}
@@ -413,7 +468,8 @@ class Costs extends Model {
 	}
 
 	public function getDisplay( $did, $tid, $context ) {
-		$price = (float) $this->get($did, $tid, $context);
+		$price = (float)$this->get($did, $tid, $context);
+
 		return number_format($price, 2);
 	}
 

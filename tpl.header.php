@@ -9,6 +9,9 @@ td, th {
 	padding: 6px;
 	vertical-align: top;
 }
+thead th {
+	text-align: left;
+}
 td.fat, th.fat {
 	border-left: solid #999 3px;
 }
@@ -22,11 +25,14 @@ input ~ table {
 	font-style: italic;
 	color: #bbb;
 }
-.price {
+input.date {
+	width: 7em;
+}
+input.price {
 	width: 4em;
 	text-align: center;
 }
-.time {
+input.time {
 	width: 2.5em;
 	text-align: center;
 }

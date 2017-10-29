@@ -78,7 +78,7 @@ include 'tpl.header.php';
 						<td></td>
 						<td colspan="2">
 							<? foreach (array_merge($type->datas, [new MemberTypeData]) as $data): ?>
-								<input name="member_types[<?= $type->id ?: 0 ?>][datas][<?= $data->id ?: 0 ?>][start_date]" value="<?= html($data->start_date) ?>" placeholder="2014-04-21" /><br>
+								<input name="member_types[<?= $type->id ?: 0 ?>][datas][<?= $data->id ?: 0 ?>][start_date]" class="date" value="<?= html($data->start_date) ?>" placeholder="2014-04-21" /><br>
 								<? if ($data->id): ?>
 									<? $source = ["member_types[$type->id][datas][$data->id]", $data->costs]; include "tpl.costs-{$costsTpl}.php" ?>
 									<br>
@@ -140,30 +140,64 @@ include 'tpl.header.php';
 			<tr>
 				<th></th>
 				<th>Label</th>
-				<th>Open time</th>
-				<th>Special times</th>
 				<th>Guest price</th>
 			</tr>
 		</thead>
-		<tbody>
-			<? foreach (array_merge($resources, [new Resource]) as $resource): ?>
+		<? foreach (array_merge($resources, [new Resource]) as $resource): ?>
+			<tbody>
 				<tr>
 					<th><?= $resource->id ?></th>
 					<td><input name="resources[<?= $resource->id ?: 0 ?>][label]" value="<?= html($resource->label) ?>" placeholder="Resource name" /></td>
-					<td><select name="resources[<?= $resource->id ?: 0 ?>][open_timeset_id]"><?= html_options($timesets, $resource->open_timeset_id) ?></select></td>
-					<td>
-						<? if ($resource->id): ?>
-							<? foreach (array_merge($resource->timesets, [new ResourceTimeset]) as $timeset): ?>
-								<select name="resources[<?= $resource->id ?>][timesets][<?= $timeset->id ?: 0 ?>][timeset_id]"><?= html_options($timesets, $timeset->timeset_id, '--') ?></select>
-								<select name="resources[<?= $resource->id ?>][timesets][<?= $timeset->id ?: 0 ?>][time_dimension_id]"><?= html_options($times, $timeset->time_dimension_id, '--') ?></select>
-								<br>
-							<? endforeach ?>
-						<? endif ?>
-					</td>
-					<td><select name="resources[<?= $resource->id ?: 0 ?>][resource_price_id]"><?= html_options($resourcePrices, $resource->resource_price_id, '--') ?></select></td>
+					<td><select name="resources[<?= $resource->id ?: 0 ?>][resource_price_id]"><?= html_options($resourcePrices, $resource->resource_price_id, '-- resource price --') ?></select></td>
 				</tr>
-			<? endforeach ?>
-		</tbody>
+				<? if ($resource->id): ?>
+					<tr>
+						<td></td>
+						<td colspan="2">
+							<table>
+								<thead>
+									<tr>
+										<th></th>
+										<th>Period</th>
+										<th>Open time</th>
+										<th>Special times</th>
+									</tr>
+								</thead>
+								<tbody>
+									<? foreach (array_merge($resource->timesets, [new ResourceTimeset]) as $timeset): ?>
+										<tr>
+											<th><?= $timeset->id ?></th>
+											<td>
+												<input name="resources[<?= $resource->id ?>][timesets][<?= $timeset->id ?: 0 ?>][start_date]" class="date" value="<?= html($timeset->start_date) ?>" placeholder="2014-04-21" />
+												-
+												<input name="resources[<?= $resource->id ?>][timesets][<?= $timeset->id ?: 0 ?>][end_date]" class="date" value="<?= html($timeset->end_date) ?>" placeholder="2014-04-21" />
+											</td>
+											<td><select name="resources[<?= $resource->id ?>][timesets][<?= $timeset->id ?: 0 ?>][open_timeset_id]"><?= html_options($timesets, $timeset->open_timeset_id) ?></select></td>
+											<td>
+												<?if ($timeset->id): ?>
+													<table>
+														<tbody>
+															<? foreach (array_merge($timeset->peak_times, [new ResourcePeakTime]) as $peak): ?>
+																<tr>
+																	<th><?= $peak->id ?></th>
+																	<td><select name="resources[<?= $resource->id ?>][timesets][<?= $timeset->id ?: 0 ?>][peak_times][<?= $peak->id ?: 0 ?>][timeset_id]"><?= html_options($timesets, $peak->timeset_id, '-- timeset --') ?></select></td>
+																	<td><select name="resources[<?= $resource->id ?>][timesets][<?= $timeset->id ?: 0 ?>][peak_times][<?= $peak->id ?: 0 ?>][time_dimension_id]"><?= html_options($times, $peak->time_dimension_id, '-- time dimension --') ?></select></td>
+																</tr>
+															<? endforeach ?>
+														</tbody>
+													</table>
+												<? endif ?>
+											</td>
+										</tr>
+									<? endforeach ?>
+								</tbody>
+							</table>
+							<br>
+						</td>
+					</tr>
+				<? endif ?>
+			</tbody>
+		<? endforeach ?>
 		<tfoot>
 			<tr>
 				<td></td>

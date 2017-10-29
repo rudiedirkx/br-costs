@@ -3,7 +3,6 @@
 require 'bootstrap.php';
 
 $date = $_GET['date'] ?? date('Y-m-d');
-define('TODAY', $date);
 $utc = strtotime($date);
 $today = (int) date('w', $utc);
 
@@ -16,11 +15,11 @@ $resources = Resource::all('1');
 /** @var MemberType[] $memberTypes */
 $memberTypes = MemberType::all('1');
 
-$open = min(array_map(function(Resource $resource) use ($today) {
-	return $resource->open_timeset->{"open_$today"};
+$open = min(array_map(function(Resource $resource) use ($date, $today) {
+	return $resource->getDatedTimesetFor($date)->open_timeset->{"open_$today"};
 }, $resources));
-$clos = min(array_map(function(Resource $resource) use ($today) {
-	return $resource->open_timeset->{"clos_$today"};
+$clos = min(array_map(function(Resource $resource) use ($date, $today) {
+	return $resource->getDatedTimesetFor($date)->open_timeset->{"clos_$today"};
 }, $resources));
 $times = range($open, $clos-1);
 
@@ -49,8 +48,10 @@ td:not(.show-meta) > div {
 	<thead>
 		<tr>
 			<th></th>
-			<? foreach ($resources as $resource): ?>
-				<th><?= html($resource) ?></th>
+			<? foreach ($resources as $resource):
+				$timeset = $resource->getDatedTimesetFor($date)->open_timeset;
+				?>
+				<th title="Open hours: <?= html($timeset) ?> (<?= html($timeset->id) ?>)"><?= html($resource) ?></th>
 			<? endforeach ?>
 		</tr>
 	</thead>
@@ -59,8 +60,8 @@ td:not(.show-meta) > div {
 			<tr>
 				<th><?= $time ?> - <?= $time+1 ?></th>
 				<? foreach ($resources as $resource):
-					$timeset = $resource->getTimesetFor($today, $time, $time+1);
-					$timeDim = $resource->getTimeDimensionFor($today, $time, $time+1);
+					$timeset = $resource->getTimesetFor($date, $time, $time+1);
+					$timeDim = $resource->getTimeDimensionFor($date, $time, $time+1);
 					if ($timeDim):
 						$did = $day->id;
 						$tid = $timeDim->id;
@@ -68,10 +69,9 @@ td:not(.show-meta) > div {
 						<td bgcolor="<?= $timeDim->color ?>">
 							<?= html($timeDim) ?>
 							<div>Timeset: <?= html($timeset) ?></div>
-<!--							<div>Time: --><?//= html($timeDim) ?><!--</div>-->
 							<div>Guest: <?= $resource->resource_price->costs->getDisplay($did, $tid, 'make') ?></div>
 							<? foreach ($memberTypes as $type): ?>
-								<div><?= html($type) ?>: <?= $type->active_data->costs->getDisplay($did, $tid, 'make') ?></div>
+								<div><?= html($type) ?>: <?= $type->getDataFor($date)->costs->getDisplay($did, $tid, 'make') ?></div>
 							<? endforeach ?>
 						</td>
 					<? else: ?>

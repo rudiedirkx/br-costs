@@ -1,12 +1,12 @@
 <?php
 
-$fk = function($tbl, $col, $null = false, $delete = null) {
-	return ['null' => $null, 'type' => 'int', 'references' => [$tbl, $col, $delete]];
+$fk = function($tbl, $null, $delete = null) {
+	return ['null' => $null, 'type' => 'int', 'references' => [$tbl, 'id', $delete]];
 };
 $weekday = ['type' => 'int', 'null' => false, 'default' => 0];
 
 return [
-	'version' => 14,
+	'version' => 15,
 	'tables' => [
 		'day_dimension' => [
 			'id' => ['pk' => true],
@@ -26,9 +26,9 @@ return [
 			'label' => ['null' => false],
 		],
 		'costs_data' => [
-			'costs_id' => $fk('costs', 'id'),
-			'day_dimension_id' => $fk('day_dimension', 'id'),
-			'time_dimension_id' => $fk('time_dimension', 'id'),
+			'costs_id' => $fk('costs', false),
+			'day_dimension_id' => $fk('day_dimension', false),
+			'time_dimension_id' => $fk('time_dimension', false),
 			'context' => ['null' => false, 'default' => ''],
 			'costs' => ['type' => 'float'],
 		],
@@ -36,7 +36,7 @@ return [
 		'class_activities' => [
 			'id' => ['pk' => true],
 			'label' => ['null' => false],
-			'costs_id' => $fk('costs', 'id', true),
+			'costs_id' => $fk('costs', true),
 		],
 
 		'member_types' => [
@@ -45,9 +45,9 @@ return [
 		],
 		'member_type_datas' => [
 			'id' => ['pk' => true],
-			'member_type_id' => $fk('member_types', 'id'),
+			'member_type_id' => $fk('member_types', false),
 			'start_date' => ['null' => false, 'type' => 'date'],
-			'costs_id' => $fk('costs', 'id', true),
+			'costs_id' => $fk('costs', true),
 		],
 
 		'timesets' => [
@@ -72,19 +72,26 @@ return [
 		'resources' => [
 			'id' => ['pk' => true],
 			'label' => ['null' => false],
-			'open_timeset_id' => $fk('timesets', 'id'),
-			'resource_price_id' => $fk('resource_prices', 'id', true, 'set null'),
+			'resource_price_id' => $fk('resource_prices', true, 'set null'),
 		],
 		'resource_timesets' => [
 			'id' => ['pk' => true],
-			'resource_id' => $fk('resources', 'id', false, 'cascade'),
-			'timeset_id' => $fk('timesets', 'id', false, 'cascade'),
-			'time_dimension_id' => $fk('time_dimension', 'id', false, 'cascade'),
+			'resource_id' => $fk('resources', false, 'cascade'),
+			'start_date' => ['type' => 'date'],
+			'end_date' => ['type' => 'date'],
+			'open_timeset_id' => $fk('timesets', false),
 		],
+		'resource_peak_times' => [
+			'id' => ['pk' => true],
+			'resource_timeset_id' => $fk('resource_timesets', false, 'cascade'),
+			'timeset_id' => $fk('timesets', false, 'cascade'),
+			'time_dimension_id' => $fk('time_dimension', false, 'cascade'),
+		],
+
 		'resource_prices' => [
 			'id' => ['pk' => true],
 			'label' => ['null' => false],
-			'costs_id' => $fk('costs', 'id', true),
+			'costs_id' => $fk('costs', true),
 		],
 	],
 ];
