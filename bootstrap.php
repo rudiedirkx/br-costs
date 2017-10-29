@@ -1,6 +1,6 @@
 <?php
 
-require 'env.php';
+require __DIR__ . '/vendor/autoload.php';
 
 require 'inc.functions.php';
 
