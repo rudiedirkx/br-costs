@@ -160,7 +160,7 @@ include 'tpl.header.php';
 										<th></th>
 										<th>Period</th>
 										<th>Open time</th>
-										<th>Special times</th>
+										<th>Peak times</th>
 									</tr>
 								</thead>
 								<tbody>
