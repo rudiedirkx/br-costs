@@ -1,6 +1,6 @@
 <?php
 
-require 'bootstrap.php';
+require __DIR__ . '/inc.bootstrap.php';
 
 $labelIsEmpty = function(array $data) {
 	return trim(@$data['label']) === '';

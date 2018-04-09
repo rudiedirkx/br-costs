@@ -2,11 +2,9 @@
 
 require __DIR__ . '/vendor/autoload.php';
 
-require 'inc.functions.php';
-
 $db = db_sqlite::open(['database' => __DIR__ . '/db/br-costs.sqlite3']);
 
-require 'inc.ensure-db-schema.php';
+$db->ensureSchema(require 'inc.db-schema.php');
 
 db_generic_model::$_db = $db;
 

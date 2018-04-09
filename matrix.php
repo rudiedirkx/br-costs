@@ -1,6 +1,6 @@
 <?php
 
-require 'bootstrap.php';
+require __DIR__ . '/inc.bootstrap.php';
 
 $date = $_GET['date'] ?? date('Y-m-d');
 $utc = strtotime($date);
