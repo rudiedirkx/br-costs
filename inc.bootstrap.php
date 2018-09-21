@@ -148,7 +148,7 @@ class Resource extends Model {
 		return null;
 	}
 
-	static function presave( &$data ) {
+	static function presave( array &$data ) {
 		parent::presave($data);
 
 		$data['resource_price_id'] = $data['resource_price_id'] ?: null;
@@ -293,7 +293,7 @@ class DayDimension extends Model {
 class TimeDimension extends Model {
 	static public $_table = 'time_dimension';
 
-	static function presave( &$data ) {
+	static function presave( array &$data ) {
 		$data['is_default'] = !empty($data['is_default']);
 		$data['is_peak'] = !empty($data['is_peak']);
 	}

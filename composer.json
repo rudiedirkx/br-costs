@@ -3,6 +3,6 @@
 		"files": ["inc.functions.php"]
 	},
     "require": {
-        "rdx/db": "^1.6"
+        "rdx/db": "^1.13"
     }
 }

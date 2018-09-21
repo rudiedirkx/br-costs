@@ -58,8 +58,11 @@ include 'tpl.header.php';
 ?>
 
 <p>
-	<a href="?ctpl=1">1D</a> |
-	<a href="?ctpl=2">2D</a> |
+	<? if ($costsTpl == '1d'): ?>
+		<a href="?ctpl=2">2D</a> |
+	<? else: ?>
+		<a href="?ctpl=1">1D</a> |
+	<? endif ?>
 	<a href="matrix.php">Matrix</a>
 </p>
 
@@ -100,10 +103,9 @@ include 'tpl.header.php';
 	</table>
 </form>
 
-<!--
-<h2t" id="activities">Class activities</h2>
+<h2 id="activities">Class activities</h2>
 
-<form method="pos action="#activities">
+<form method="post" action="#activities">
 	<table>
 		<? foreach (array_merge($activities, [new ClassActivity]) as $activity): ?>
 			<tbody>
@@ -130,7 +132,6 @@ include 'tpl.header.php';
 		</tfoot>
 	</table>
 </form>
--->
 
 <h2 id="resources">Resources</h2>
 
