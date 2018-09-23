@@ -15,9 +15,9 @@ list($sname, $scosts) = $source;
 			<th><?= html($time) ?></th>
 			<? foreach ($days as $day): ?>
 				<td>
-					<input class="price" name="<?= $sname ?>[costs][<?= $day->id . '-' . $time->id . '-make' ?>]" value="<?= $scosts->getInput($day->id, $time->id, 'make') ?>" placeholder="Price" />
+					<input class="price" name="<?= $sname ?>[costs][<?= $day->id . '-' . $time->id . '-make' ?>]" value="<?= $scosts->getInput($day->id, $time->id, 'make') ?>" placeholder="Price" title="Price" />
 					/
-					<input class="price" name="<?= $sname ?>[costs][<?= $day->id . '-' . $time->id . '-cancel' ?>]" value="<?= $scosts->getInput($day->id, $time->id, 'cancel') ?>" placeholder="Cancel" />
+					<input class="price" name="<?= $sname ?>[costs][<?= $day->id . '-' . $time->id . '-cancel' ?>]" value="<?= $scosts->getInput($day->id, $time->id, 'cancel') ?>" placeholder="Cancel" title="Cancel" />
 				</td>
 			<? endforeach ?>
 		</tr>

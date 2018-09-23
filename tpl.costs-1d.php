@@ -20,7 +20,7 @@ list($sname, $scosts) = $source;
 		<? foreach (array_values($days) as $i => $day): ?>
 			<? foreach (array_values($times) as $j => $time): ?>
 				<td class="<?= $i && !$j ? 'fat' : '' ?>">
-					<input class="price" name="<?= $sname ?>[costs][<?= $day->id . '-' . $time->id . '-make' ?>]" value="<?= $scosts->getInput($day->id, $time->id, 'make') ?>" placeholder="Price" />
+					<input class="price" name="<?= $sname ?>[costs][<?= $day->id . '-' . $time->id . '-make' ?>]" value="<?= $scosts->getInput($day->id, $time->id, 'make') ?>" placeholder="Price" title="Price" />
 				</td>
 			<? endforeach ?>
 		<? endforeach ?>
@@ -29,7 +29,7 @@ list($sname, $scosts) = $source;
 		<? foreach (array_values($days) as $i => $day): ?>
 			<? foreach (array_values($times) as $j => $time): ?>
 				<td class="<?= $i && !$j ? 'fat' : '' ?>">
-					<input class="price" name="<?= $sname ?>[costs][<?= $day->id . '-' . $time->id . '-cancel' ?>]" value="<?= $scosts->getInput($day->id, $time->id, 'cancel') ?>" placeholder="Cancel" />
+					<input class="price" name="<?= $sname ?>[costs][<?= $day->id . '-' . $time->id . '-cancel' ?>]" value="<?= $scosts->getInput($day->id, $time->id, 'cancel') ?>" placeholder="Cancel" title="Cancel" />
 				</td>
 			<? endforeach ?>
 		<? endforeach ?>

@@ -10,18 +10,28 @@ $today = (int) date('w', $utc);
 $day = DayDimension::first('days LIKE ?', ["%$today%"]);
 
 /** @var Resource[] $resources */
-$resources = Resource::all('1');
+$resources = Resource::all('EXISTS (SELECT * FROM resource_timesets WHERE resource_id = resources.id AND ? BETWEEN start_date AND end_date)', [$date]);
+$timesets = Resource::eager('timesets', $resources);
+ResourceTimeset::eager('open_timeset', $timesets);
+$peaks = ResourceTimeset::eager('peak_times', $timesets);
+ResourcePeakTime::eager('timeset', $peaks);
+$prices = Resource::eager('resource_price', $resources);
 
 /** @var MemberType[] $memberTypes */
 $memberTypes = MemberType::all('1');
+$datas = MemberType::eager('datas', $memberTypes);
 
-$open = min(array_map(function(Resource $resource) use ($date, $today) {
-	return $resource->getDatedTimesetFor($date)->open_timeset->{"open_$today"};
-}, $resources));
-$clos = min(array_map(function(Resource $resource) use ($date, $today) {
-	return $resource->getDatedTimesetFor($date)->open_timeset->{"clos_$today"};
-}, $resources));
-$times = range($open, $clos-1);
+$open = $clos = null;
+$times = [];
+if ( count($resources) ) {
+	$open = min(array_map(function(Resource $resource) use ($date, $today) {
+		return $resource->getDatedTimesetFor($date)->open_timeset->{"open_$today"};
+	}, $resources));
+	$clos = min(array_map(function(Resource $resource) use ($date, $today) {
+		return $resource->getDatedTimesetFor($date)->open_timeset->{"clos_$today"};
+	}, $resources));
+	$times = range($open, $clos-1);
+}
 
 $prevDate = date('Y-m-d', strtotime('-1 day', $utc));
 $nextDate = date('Y-m-d', strtotime('+1 day', $utc));
@@ -39,6 +49,8 @@ td:not(.show-meta) > div {
 </style>
 
 <p>
+	<a href="index.php">Config</a>
+	|
 	<a href="?date=<?= $prevDate ?>">prev day</a>
 	<?= date('l', $utc) . ' ' . $date ?>
 	<a href="?date=<?= $nextDate ?>">next day</a>
@@ -66,7 +78,7 @@ td:not(.show-meta) > div {
 						$did = $day->id;
 						$tid = $timeDim->id;
 						?>
-						<td bgcolor="<?= $timeDim->color ?>">
+						<td style="background-color: <?= $timeDim->color ?>">
 							<?= html($timeDim) ?>
 							<div>Timeset: <?= html($timeset) ?></div>
 							<div>Guest: <?= $resource->resource_price->costs->getDisplay($did, $tid, 'make') ?></div>

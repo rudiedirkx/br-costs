@@ -33,19 +33,18 @@ class Model extends db_generic_model {
  *
  */
 trait WithCosts {
-	protected function get_costs() {
-		if ( $this->costs_id ) {
-			return Costs::find($this->costs_id);
-		}
-
-		$costs = Costs::create(get_class($this) . ' ' . $this->id);
-		$this->update(['costs_id' => $costs->id]);
-
-		return $costs;
+	protected function relate_costs() {
+		return $this->to_one(Costs::class, 'costs_id')->eager(['prices'])->collect(function(self $object) {
+			if ( !$object->costs_id ) {
+				$costs = Costs::create(get_class($object) . ' ' . $object->id);
+				$object->update(['costs_id' => $costs->id]);
+			}
+			return $object->costs_id;
+		});
 	}
 
 	protected function preUpdateCosts( array &$data ) {
-		$prices = @$data['costs'];
+		$prices = $data['costs'] ?? null;
 		unset($data['costs']);
 
 		return $prices;
@@ -73,12 +72,12 @@ trait WithCosts {
 class Resource extends Model {
 	static public $_table = 'resources';
 
-	protected function get_timesets() {
-		return ResourceTimeset::all('resource_id = ? ORDER BY start_date', [$this->id]);
+	protected function relate_timesets() {
+		return $this->to_many(ResourceTimeset::class, 'resource_id')->order('start_date');
 	}
 
-	protected function get_resource_price() {
-		return ResourcePrice::find($this->resource_price_id);
+	protected function relate_resource_price() {
+		return $this->to_one(ResourcePrice::class, 'resource_price_id')->eager(['costs']);
 	}
 
 	/** @return ResourceTimeset */
@@ -186,16 +185,16 @@ class Resource extends Model {
 class ResourceTimeset extends Model {
 	static public $_table = 'resource_timesets';
 
-	protected function get_resource() {
-		return Resource::find($this->resource_id);
+	protected function relate_resource() {
+		return $this->to_one(Resource::class, 'resource_id');
 	}
 
-	protected function get_open_timeset() {
-		return Timeset::find($this->open_timeset_id);
+	protected function relate_open_timeset() {
+		return $this->to_one(Timeset::class, 'open_timeset_id');
 	}
 
-	protected function get_peak_times() {
-		return ResourcePeakTime::all(['resource_timeset_id' => $this->id]);
+	protected function relate_peak_times() {
+		return $this->to_many(ResourcePeakTime::class, 'resource_timeset_id');
 	}
 
 	function update( $data ) {
@@ -229,8 +228,8 @@ class ResourcePeakTime extends Model {
 		return ResourceTimeset::find($this->resource_timeset_id);
 	}
 
-	protected function get_timeset() {
-		return Timeset::find($this->timeset_id);
+	protected function relate_timeset() {
+		return $this->to_one(Timeset::class, 'timeset_id');
 	}
 
 	protected function get_time_dimension() {
@@ -245,6 +244,15 @@ class ResourcePeakTime extends Model {
  */
 class Timeset extends Model {
 	static public $_table = 'timesets';
+
+	static function presave( array &$data ) {
+		foreach (range(0, 6) as $day) {
+			foreach (['open', 'clos'] as $which) {
+				$col = "{$which}_{$day}";
+				isset($data[$col]) and $data[$col] = (int) $data[$col];
+			}
+		}
+	}
 
 	function __toString() {
 		return $this->label ?: '';
@@ -323,17 +331,6 @@ class ClassActivity extends Model {
 
 	static public $_table = 'class_activities';
 
-	protected function get_costs() {
-		if ( $this->costs_id ) {
-			return Costs::find($this->costs_id);
-		}
-
-		$costs = Costs::create('class activity ' . $this->id);
-		$this->update(['costs_id' => $costs->id]);
-
-		return $costs;
-	}
-
 	function update( $data ) {
 		$prices = $this->preUpdateCosts($data);
 		parent::update($data);
@@ -348,8 +345,8 @@ class ClassActivity extends Model {
 class MemberType extends Model {
 	static public $_table = 'member_types';
 
-	protected function get_datas() {
-		return MemberTypeData::all('member_type_id = ? ORDER BY start_date', [$this->id]);
+	protected function relate_datas() {
+		return $this->to_many(MemberTypeData::class, 'member_type_id')->order('start_date')->eager(['costs']);
 	}
 
 	/** @return MemberTypeData */
@@ -412,32 +409,36 @@ class MemberTypeData extends Model {
 
 /**
  * @property string $label
+ * @property CostsDatum[] $prices
  */
 class Costs extends Model {
 	const COSTS_DATA = 'costs_data';
 
 	static public $_table = 'costs';
 
-	public $costs = [];
+	public $costs;
 
-	public function init() {
-		$this->fetchCosts();
+	protected function relate_prices() {
+		return $this->to_many(CostsDatum::class, 'costs_id');
 	}
 
-	protected function fetchCosts() {
+	protected function initPrices() {
+		if ( $this->costs !== null ) return;
+
 		$this->costs = [];
-		$prices = self::$_db->select(self::COSTS_DATA, ['costs_id' => $this->id]);
-		foreach ( $prices as $price ) {
+		foreach ( $this->prices as $price ) {
 			$this->costs["{$price->day_dimension_id}-{$price->time_dimension_id}-{$price->context}"] = $price->costs;
 		}
 	}
 
 	public function saveCosts() {
+		$this->initPrices();
+
 		self::$_db->begin();
-		self::$_db->delete(self::COSTS_DATA, ['costs_id' => $this->id]);
+		self::$_db->delete(CostsDatum::$_table, ['costs_id' => $this->id]);
 		foreach ( $this->costs as $key => $price ) {
 			list($did, $tid, $context) = explode('-', $key);
-			self::$_db->insert(self::COSTS_DATA, [
+			self::$_db->insert(CostsDatum::$_table, [
 				'costs_id'          => $this->id,
 				'day_dimension_id'  => $did,
 				'time_dimension_id' => $tid,
@@ -449,11 +450,15 @@ class Costs extends Model {
 	}
 
 	public function set( $did, $tid, $context, $price ) {
+		$this->initPrices();
+
 		$this->costs["{$did}-{$tid}-{$context}"] = (float)$price;
 	}
 
 	public function get( $did, $tid, $context ) {
-		return (float)@$this->costs["{$did}-{$tid}-{$context}"];
+		$this->initPrices();
+
+		return (float) ($this->costs["{$did}-{$tid}-{$context}"] ?? 0.0);
 	}
 
 	public function getInput( $did, $tid, $context ) {
@@ -462,7 +467,7 @@ class Costs extends Model {
 			return number_format($price, 2);
 		}
 
-		return '';
+		return '0';
 	}
 
 	public function getDisplay( $did, $tid, $context ) {
@@ -476,4 +481,15 @@ class Costs extends Model {
 
 		return self::find($id);
 	}
+}
+
+/**
+ * @property int $costs_id
+ * @property int $day_dimension_id
+ * @property int $time_dimension_id
+ * @property string $context
+ * @property float $costs
+ */
+class CostsDatum extends Model {
+	public static $_table = 'costs_data';
 }
